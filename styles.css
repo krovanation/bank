@@ -1,0 +1,66 @@
+/* Allgemeine Stile */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #e0f2f1; /* Minzgrün Hintergrund */
+    color: #004d40; /* Dunkelgrün für Text */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container für das Layout */
+.container {
+    background: #ffffff; /* Weißer Hintergrund für das Layout */
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+
+/* Form Container */
+.form-container {
+    margin-bottom: 20px;
+}
+
+/* Eingabefelder */
+.input-field {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    font-size: 16px;
+    color: #004d40;
+    background: #f5f5f5; /* Helles Silber für Eingabefelder */
+}
+
+/* Buttons */
+.btn {
+    background: #00796b; /* Blaugrün */
+    color: #ffffff; /* Weißer Text */
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 5px;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background: #004d40; /* Dunkleres Blaugrün beim Hover */
+}
+
+/* Footer */
+footer {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 12px;
+    color: #00796b; /* Blaugrün */
+}

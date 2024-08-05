@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digitales Bank System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
+        import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js';
+
+        // Firebase-Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHkTCqrgce6OvSM-QsHsWNWlzsX30X7-E",
+            authDomain: "krovanationalbank.firebaseapp.com",
+            databaseURL: "https://krovanationalbank-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "krovanationalbank",
+            storageBucket: "krovanationalbank.appspot.com",
+            messagingSenderId: "780852004787",
+            appId: "1:780852004787:web:61441ca194071dd6f5edc6"
+        };
+
+        // Firebase initialisieren
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // Funktionen für Registrierung, Anmeldung, Überweisung und Logout
+        window.register = function() {
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    set(ref(db, 'users/' + user.uid), {
+                        email: user.email,
+                        balance: 100 // Startguthaben
+                    }).then(() => {
+                        alert('Registrierung erfolgreich');
+                    });
+                })
+                .catch((error) => {
+                    alert('Fehler bei der Registrierung: ' + error.message);
+                });
+        };
+
+        window.login = function() {
+            const email = document.getElementById('log-email').value;
+            const password = document.getElementById('log-password').value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    showDashboard(user.uid);
+                })
+                .catch((error) => {
+                    alert('Fehler bei der Anmeldung: ' + error.message);
+                });
+        };
+
+        function showDashboard(uid) {
+            const userRef = ref(db, 'users/' + uid);
+            get(userRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    document.getElementById('balance').innerText = `Guthaben: ${userData.balance}`;
+                    document.getElementById('register').style.display = 'none';
+                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    document.getElementById('change-balance').style.display = 'block'; // Balance ändern sichtbar machen
+                }
+            });
+        }
+
+        window.transfer = function() {
+            const fromUid = auth.currentUser.uid;
+            const toEmail = document.getElementById('transfer-email').value;
+            const amount = Number(document.getElementById('transfer-amount').value);
+
+            const usersRef = ref(db, 'users');
+            get(usersRef).then((snapshot) => {
+                let toUid = null;
+                snapshot.forEach((userSnapshot) => {
+                    if (userSnapshot.val().email === toEmail) {
+                        toUid = userSnapshot.key;
+                    }
+                });
+
+                if (toUid) {
+                    const fromUserRef = ref(db, 'users/' + fromUid);
+                    get(fromUserRef).then((fromSnapshot) => {
+                        const fromUserData = fromSnapshot.val();
+                        if (fromUserData.balance < amount) {
+                            alert('Unzureichendes Guthaben');
+                            return;
+                        }
+
+                        const toUserRef = ref(db, 'users/' + toUid);
+                        get(toUserRef).then((toSnapshot) => {
+                            const toUserData = toSnapshot.val();
+                            const updates = {};
+                            updates['/users/' + fromUid + '/balance'] = fromUserData.balance - amount;
+                            updates['/users/' + toUid + '/balance'] = toUserData.balance + amount;
+                            ref(db).update(updates);
+                            alert('Überweisung erfolgreich');
+                            showDashboard(fromUid);
+                        });
+                    });
+                } else {
+                    alert('Empfänger nicht gefunden');
+                }
+            });
+        }
+
+        window.logout = function() {
+            auth.signOut().then(() => {
+                document.getElementById('register').style.display = 'block';
+                document.getElementById('login').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+            });
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                showDashboard(user.uid);
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Digitales Bank System</h1>
+        <div id="register" class="form-container">
+            <h2>Registrieren</h2>
+            <input type="email" id="reg-email" placeholder="Email" class="input-field">
+            <input type="password" id="reg-password" placeholder="Passwort" class="input-field">
+            <button onclick="register()" class="btn">Registrieren</button>
+        </div>
+        <div id="login" class="form-container">
+            <h2>Anmelden</h2>
+            <input type="email" id="log-email" placeholder="Email" class="input-field">
+            <input type="password" id="log-password" placeholder="Passwort" class="input-field">
+            <button onclick="login()" class="btn">Anmelden</button>
+        </div>
+        <div id="dashboard" class="form-container" style="display:none;">
+            <h2>Dashboard</h2>
+            <p id="balance">Guthaben: 0</p>
+            <input type="email" id="transfer-email" placeholder="Email des Empfängers" class="input-field">
+            <input type="number" id="transfer-amount" placeholder="Betrag" class="input-field">
+            <button onclick="transfer()" class="btn">Überweisen</button>
+            <button onclick="logout()" class="btn">Abmelden</button>
+        </div>
+        <footer>
+            <p>Design Hydrogen: v0.0.1</p>
+        </footer>
+    </div>
+</body>
+</html>
