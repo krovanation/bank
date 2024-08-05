@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="styles.css">
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
-        import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
+        import { getDatabase, ref, set, get, update } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js';
 
         // Firebase-Konfiguration
         const firebaseConfig = {
@@ -58,6 +58,27 @@
                 });
         };
 
+        window.googleLogin = function() {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    const userRef = ref(db, 'users/' + user.uid);
+                    get(userRef).then((snapshot) => {
+                        if (!snapshot.exists()) {
+                            set(userRef, {
+                                email: user.email,
+                                balance: 100 // Startguthaben
+                            });
+                        }
+                        showDashboard(user.uid);
+                    });
+                })
+                .catch((error) => {
+                    alert('Fehler bei der Google-Anmeldung: ' + error.message);
+                });
+        };
+
         function showDashboard(uid) {
             const userRef = ref(db, 'users/' + uid);
             get(userRef).then((snapshot) => {
@@ -67,7 +88,6 @@
                     document.getElementById('register').style.display = 'none';
                     document.getElementById('login').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
-                    document.getElementById('change-balance').style.display = 'block'; // Balance ändern sichtbar machen
                 }
             });
         }
@@ -101,7 +121,7 @@
                             const updates = {};
                             updates['/users/' + fromUid + '/balance'] = fromUserData.balance - amount;
                             updates['/users/' + toUid + '/balance'] = toUserData.balance + amount;
-                            ref(db).update(updates);
+                            update(ref(db), updates);
                             alert('Überweisung erfolgreich');
                             showDashboard(fromUid);
                         });
@@ -141,6 +161,7 @@
             <input type="email" id="log-email" placeholder="Email" class="input-field">
             <input type="password" id="log-password" placeholder="Passwort" class="input-field">
             <button onclick="login()" class="btn">Anmelden</button>
+            <button onclick="googleLogin()" class="btn google-btn">Mit Google anmelden</button>
         </div>
         <div id="dashboard" class="form-container" style="display:none;">
             <h2>Dashboard</h2>
