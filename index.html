@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
         import { getDatabase, ref, set, get, update } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js';
 
         // Firebase-Konfiguration
@@ -37,7 +37,10 @@
                         email: user.email,
                         balance: 100 // Startguthaben
                     }).then(() => {
-                        alert('Registrierung erfolgreich');
+                        sendEmailVerification(user)
+                            .then(() => {
+                                alert('Registrierung erfolgreich. Bitte bestätigen Sie Ihre E-Mail-Adresse.');
+                            });
                     });
                 })
                 .catch((error) => {
@@ -51,7 +54,14 @@
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    showDashboard(user.uid);
+                    if (!user.emailVerified) {
+                        sendEmailVerification(user)
+                            .then(() => {
+                                alert('Bitte bestätigen Sie Ihre E-Mail-Adresse. Eine neue Bestätigungs-E-Mail wurde gesendet.');
+                            });
+                    } else {
+                        showDashboard(user.uid);
+                    }
                 })
                 .catch((error) => {
                     alert('Fehler bei der Anmeldung: ' + error.message);
@@ -71,7 +81,14 @@
                                 balance: 100 // Startguthaben
                             });
                         }
-                        showDashboard(user.uid);
+                        if (!user.emailVerified) {
+                            sendEmailVerification(user)
+                                .then(() => {
+                                    alert('Bitte bestätigen Sie Ihre E-Mail-Adresse. Eine Bestätigungs-E-Mail wurde gesendet.');
+                                });
+                        } else {
+                            showDashboard(user.uid);
+                        }
                     });
                 })
                 .catch((error) => {
@@ -142,7 +159,14 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                showDashboard(user.uid);
+                if (!user.emailVerified) {
+                    sendEmailVerification(user)
+                        .then(() => {
+                            alert('Bitte bestätigen Sie Ihre E-Mail-Adresse. Eine Bestätigungs-E-Mail wurde gesendet.');
+                        });
+                } else {
+                    showDashboard(user.uid);
+                }
             }
         });
     </script>
