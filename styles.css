@@ -56,6 +56,14 @@ body {
     background: #004d40; /* Dunkleres Blaugrün beim Hover */
 }
 
+.google-btn {
+    background: #db4437; /* Google Rot */
+}
+
+.google-btn:hover {
+    background: #a33d2d; /* Dunkleres Google Rot beim Hover */
+}
+
 /* Footer */
 footer {
     position: absolute;
